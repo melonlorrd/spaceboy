@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spaceboy</title>
+    <title>Space Cowboy - Arena Skirmish</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500&display=swap');
@@ -40,6 +40,34 @@
         }
         #minimapCanvas { border-radius: 6px; }
 
+        /* Top Left Controls */
+        #top-left-controls { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; gap: 10px; }
+        .ctrl-btn {
+            background: rgba(10,15,20,0.8); color: #bdc3c7; border: 1px solid #555;
+            padding: 8px 12px; cursor: pointer; font-family: 'Courier Prime', monospace;
+            border-radius: 8px; font-size: 12px; pointer-events: auto;
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.2); }
+
+        /* Responsive Scaling for Mobile Screens */
+        @media (max-width: 900px) {
+            #ui-top { top: 10px; padding: 8px 15px; gap: 10px; width: 85%; max-width: 600px; flex-wrap: wrap; justify-content: center; border-radius: 15px; }
+            .min-stat { font-size: 11px; gap: 5px; }
+            .min-stat:nth-child(n+3) { border-left: none; padding-left: 0; }
+            .min-bar-bg { width: 70px; height: 8px; }
+            #minimap-panel { top: 55px; right: 10px; transform: scale(0.7); transform-origin: top right; }
+            #mobile-actions { bottom: 50px; right: 20px; gap: 10px; }
+            .mob-btn { width: 40px; height: 40px; font-size: 10px; }
+            #mobile-actions .mob-btn:last-child { width: 55px; height: 55px; font-size: 14px; }
+            #touch-joystick { width: 100px; height: 100px; bottom: 50px; left: 20px; }
+            #touch-knob { width: 40px; height: 40px; }
+            .ctrl-btn { padding: 6px 10px; font-size: 10px; }
+        }
+        @media (max-width: 500px) {
+            .min-bar-bg { width: 50px; }
+            #ui-top { gap: 8px; }
+        }
+
         /* Mobile Controls */
         .mob-btn {
             background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); 
@@ -48,16 +76,13 @@
             align-items: center; justify-content: center; backdrop-filter: blur(4px);
         }
         .mob-btn:active { background: rgba(255,255,255,0.3); }
-        #touch-toggle {
-            position: absolute; top: 15px; left: 15px; z-index: 10;
-            background: rgba(10,15,20,0.8); color: #bdc3c7; border: 1px solid #555;
-            padding: 8px 12px; cursor: pointer; font-family: 'Courier Prime', monospace;
-            border-radius: 8px; font-size: 12px; pointer-events: auto;
-        }
     </style>
 </head>
 <body>
-    <button id="touch-toggle">TOUCH UI: OFF</button>
+    <div id="top-left-controls">
+        <button id="touch-toggle" class="ctrl-btn">TOUCH UI: OFF</button>
+        <button id="fullscreen-toggle" class="ctrl-btn">FULLSCREEN</button>
+    </div>
     
     <div id="touch-joystick" style="display: none; position: absolute; bottom: 100px; left: 40px; width: 140px; height: 140px; background: rgba(255,255,255,0.05); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); z-index: 5; pointer-events: auto;">
         <div id="touch-knob" style="position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: rgba(255,255,255,0.3); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;"></div>
@@ -109,6 +134,13 @@ const GRAVITY = 0, FRICTION = 0.85; // Zero gravity for space feel
 let score = 0;
 let camera = { x: 0, y: 0 };
 let screenShake = 0;
+let gameScale = 1;
+
+function updateScale() {
+    gameScale = Math.min(1, window.innerWidth / 1280); // Base target resolution scaling
+    if (gameScale < 0.4) gameScale = 0.4; // Cap zooming out at 40% on tiny phones
+}
+updateScale(); // Initial scale setup
 
 // Inputs
 const keys = { a: false, d: false, w: false, s: false, space: false, q: false, f: false, 1: false, 2: false };
@@ -321,8 +353,8 @@ class Mercenary {
                     this.aimAngle = Math.atan2(touchJoystick.y, touchJoystick.x);
                 }
             } else {
-                let mx = mouse.x + camera.x;
-                let my = mouse.y + camera.y;
+                let mx = (mouse.x / gameScale) + camera.x;
+                let my = (mouse.y / gameScale) + camera.y;
                 this.aimAngle = Math.atan2(my - (this.y + this.h/2), mx - (this.x + this.w/2));
             }
 
@@ -829,8 +861,8 @@ function gameLoop() {
     });
 
     // Camera follow (smooth)
-    camera.x += ((player.x + player.w/2 - canvas.width/2) - camera.x) * 0.1;
-    camera.y += ((player.y + player.h/2 - canvas.height/2) - camera.y) * 0.1;
+    camera.x += ((player.x + player.w/2 - (canvas.width/gameScale)/2) - camera.x) * 0.1;
+    camera.y += ((player.y + player.h/2 - (canvas.height/gameScale)/2) - camera.y) * 0.1;
 
     // Screen Shake
     let sx = (Math.random()-0.5)*screenShake; let sy = (Math.random()-0.5)*screenShake;
@@ -842,6 +874,9 @@ function gameLoop() {
     ctx.fillStyle = '#050508'; // Space
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    ctx.save();
+    ctx.scale(gameScale, gameScale);
+
     // Parallax Stars
     ctx.fillStyle = '#ffffff';
     stars.forEach(s => {
@@ -864,8 +899,8 @@ function gameLoop() {
         for (let x = 0; x < MAP_COLS; x++) {
             if (map[y][x] === 1) {
                 // Culling
-                if (x*ts > camera.x - ts && x*ts < camera.x + canvas.width &&
-                    y*ts > camera.y - ts && y*ts < camera.y + canvas.height) {
+                if (x*ts > camera.x - ts && x*ts < camera.x + canvas.width/gameScale &&
+                    y*ts > camera.y - ts && y*ts < camera.y + canvas.height/gameScale) {
                     
                     // Base rock
                     ctx.fillStyle = '#555';
@@ -892,8 +927,8 @@ function gameLoop() {
     // Draw Ambient Debris
     ctx.globalAlpha = 0.5;
     debris.forEach(d => {
-        if (d.x > camera.x - 10 && d.x < camera.x + canvas.width + 10 &&
-            d.y > camera.y - 10 && d.y < camera.y + canvas.height + 10) {
+        if (d.x > camera.x - 10 && d.x < camera.x + canvas.width/gameScale + 10 &&
+            d.y > camera.y - 10 && d.y < camera.y + canvas.height/gameScale + 10) {
             ctx.fillStyle = d.color;
             ctx.fillRect(d.x, d.y, d.size, d.size);
         }
@@ -911,6 +946,7 @@ function gameLoop() {
     });
 
     ctx.restore();
+    ctx.restore(); // Restore global context scale
 
     // Render Minimap
     drawMinimap();
@@ -933,7 +969,11 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+window.addEventListener('resize', () => { 
+    canvas.width = window.innerWidth; 
+    canvas.height = window.innerHeight; 
+    updateScale();
+});
 updateUI();
 gameLoop();
 
@@ -974,6 +1014,17 @@ function updateJoy(touch) {
     joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     touchJoystick.x = dx / 40; touchJoystick.y = dy / 40; touchJoystick.active = true;
 }
+
+// Fullscreen logic
+document.getElementById('fullscreen-toggle').addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => console.log(err));
+    else document.exitFullscreen();
+});
+document.addEventListener('fullscreenchange', () => {
+    let btn = document.getElementById('fullscreen-toggle');
+    if (document.fullscreenElement) btn.innerText = 'EXIT FS';
+    else btn.innerText = 'FULLSCREEN';
+});
 
 </script>
 </body>
