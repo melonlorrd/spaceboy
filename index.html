@@ -28,10 +28,6 @@
             z-index: 10;
         }
         .min-stat { display: flex; align-items: center; gap: 10px; color: #ecf0f1; font-size: 14px; font-family: 'Oswald', sans-serif; letter-spacing: 1px; white-space: nowrap; }
-        .min-bar-bg { width: 120px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; border: 1px solid #444; }
-        .min-bar-fg { height: 100%; transition: width 0.1s; }
-        .hp-color { background: #e74c3c; }
-        .fuel-color { background: #3498db; }
 
         #minimap-panel {
             position: absolute; top: 15px; right: 15px;
@@ -54,18 +50,17 @@
             #ui-top { top: 10px; padding: 8px 15px; gap: 10px; width: 85%; max-width: 600px; flex-wrap: wrap; justify-content: center; border-radius: 15px; }
             .min-stat { font-size: 11px; gap: 5px; }
             .min-stat:nth-child(n+3) { border-left: none; padding-left: 0; }
-            .min-bar-bg { width: 70px; height: 8px; }
             #top-left-controls { top: 75px; left: 10px; flex-direction: column; }
             #minimap-panel { top: 75px; right: 10px; transform: scale(0.6); transform-origin: top right; }
             #mobile-actions { bottom: 20px !important; right: 20px !important; gap: 10px !important; }
             .mob-btn { width: 40px !important; height: 40px !important; font-size: 10px !important; }
-            #mobile-actions .mob-btn:last-child { width: 55px !important; height: 55px !important; font-size: 14px !important; }
+            #fire-btn { width: 55px !important; height: 55px !important; font-size: 14px !important; }
+            .mob-sub-actions { gap: 10px !important; }
             #touch-joystick { width: 100px !important; height: 100px !important; bottom: 20px !important; left: 20px !important; }
             #touch-knob { width: 40px !important; height: 40px !important; }
             .ctrl-btn { padding: 6px 10px; font-size: 10px; }
         }
         @media (max-width: 500px) {
-            .min-bar-bg { width: 50px; }
             #ui-top { gap: 8px; width: 95%; padding: 6px 5px; }
             #top-left-controls { top: 85px; }
             #minimap-panel { top: 85px; transform: scale(0.5); }
@@ -91,26 +86,26 @@
         <div id="touch-knob" style="position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: rgba(255,255,255,0.3); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;"></div>
     </div>
     
-    <div id="mobile-actions" style="display: none; position: absolute; bottom: 40px; right: 40px; gap: 15px; z-index: 5; align-items: center;">
-        <div class="mob-btn" style="width: 50px; height: 50px; font-size: 12px;" onclick="keys.q = true; setTimeout(()=>keys.q=false, 100)">SWP</div>
-        <div class="mob-btn" style="width: 50px; height: 50px; font-size: 12px;" onclick="keys.f = true; setTimeout(()=>keys.f=false, 100)">BMB</div>
-        <div class="mob-btn" style="width: 65px; height: 65px; font-size: 16px; background: rgba(231,76,60,0.3); border-color: rgba(231,76,60,0.8);" ontouchstart="mouse.down=true; event.preventDefault();" ontouchend="mouse.down=false; event.preventDefault();" onmousedown="mouse.down=true;" onmouseup="mouse.down=false;">FIRE</div>
+    <div id="mobile-actions" style="display: none; position: absolute; bottom: 40px; right: 40px; gap: 15px; z-index: 5; flex-direction: column; align-items: center;">
+        <div id="fire-btn" class="mob-btn" style="width: 65px; height: 65px; font-size: 16px; background: rgba(231,76,60,0.3); border-color: rgba(231,76,60,0.8);" ontouchstart="mouse.down=true; event.preventDefault();" ontouchend="mouse.down=false; event.preventDefault();" onmousedown="mouse.down=true;" onmouseup="mouse.down=false;">FIRE</div>
+        <div class="mob-sub-actions" style="display: flex; gap: 15px;">
+            <div class="mob-btn" style="width: 50px; height: 50px; font-size: 12px;" onclick="keys.q = true; setTimeout(()=>keys.q=false, 100)">SWP</div>
+            <div class="mob-btn" style="width: 50px; height: 50px; font-size: 12px;" onclick="keys.f = true; setTimeout(()=>keys.f=false, 100)">BMB</div>
+        </div>
     </div>
 
     <div id="ui-top">
         <div class="min-stat">
-            <span style="color: #e74c3c;">HP</span>
-            <div class="min-bar-bg"><div id="health-bar" class="min-bar-fg hp-color"></div></div>
+            <span style="color: #e74c3c;">HP:</span> <span id="health-val" style="width: 35px;">100%</span>
         </div>
         <div class="min-stat">
-            <span style="color: #3498db;">PWR</span>
-            <div class="min-bar-bg"><div id="fuel-bar" class="min-bar-fg fuel-color"></div></div>
+            <span style="color: #3498db;">PWR:</span> <span id="fuel-val" style="width: 35px;">100%</span>
         </div>
         <div class="min-stat" style="border-left: 1px solid #444; padding-left: 15px;">
             <span id="weapon-name">PISTOL</span> <span style="color: #7f8c8d;">|</span> BOMBS: <span id="bomb-count" style="color:#e74c3c;">5</span>
         </div>
         <div class="min-stat" id="status-effect" style="display: none; border-left: 1px solid #444; padding-left: 15px; color: #9b59b6;">
-            DEF 60s
+            DEFLECTOR: 60S
         </div>
         <div class="min-stat" style="border-left: 1px solid #444; padding-left: 15px; color: #f1c40f;">
             W$<span id="score">0</span>
@@ -389,7 +384,8 @@ class Mercenary {
 
             if(dist < 400) {
                 this.aimAngle = Math.atan2(p.y - this.y, p.x - this.x);
-                if(this.aiTimer % 60 === 0 && Math.random() > 0.3) this.shoot();
+                let fireRate = this.weapon === 'smg' ? 15 : 60; // AI shoots rapidly with SMG
+                if(this.aiTimer % fireRate === 0 && Math.random() > 0.3) this.shoot();
                 
                 if(dist < 200) { dx -= Math.cos(this.aimAngle); dy -= Math.sin(this.aimAngle); }
                 else if(dist > 300) { dx += Math.cos(this.aimAngle); dy += Math.sin(this.aimAngle); }
@@ -464,7 +460,7 @@ class Mercenary {
             this.fireCooldown = 5;
             this.vx -= Math.cos(this.aimAngle)*1;
         } else if (this.weapon === 'laser') {
-            if (this.fuel < this.maxFuel) return; // Needs full core power
+            if (this.isPlayer && this.fuel < this.maxFuel) return; // Player needs full core power to shoot
             this.fuel = 0; // Drain completely
 
             let lx = bx, ly = by;
@@ -588,7 +584,7 @@ class Mercenary {
             ctx.beginPath(); ctx.rect(35, -4, 14, 8); ctx.rect(43, 2, 4, 6); ctx.fill(); ctx.stroke();
         } else if (this.weapon === 'laser') {
             ctx.beginPath(); ctx.rect(35, -2, 18, 4); ctx.fill(); ctx.stroke();
-            if (this.fuel >= this.maxFuel) {
+            if (this.fuel >= this.maxFuel || !this.isPlayer) { // Enemy laser always glows red to telegraph danger
                 ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 10;
                 ctx.fillStyle = '#ff4d4d'; // Bright glowing red
             } else {
@@ -719,22 +715,26 @@ class Crate {
     }
     update() {
         this.bob += 0.05;
-        let p = entities[0];
-        if(p.x < this.x+this.w && p.x+p.w > this.x && p.y < this.y+this.h && p.y+p.h > this.y) {
-            if(this.type === 'durability') { p.maxHp += 50; p.hp = p.maxHp; }
-            else if (this.type === 'deflector') { p.deflector = true; p.deflectorTimer = 3600; } // 60s at 60fps
-            else if (this.type === 'bomb') { p.bombs = Math.min(5, p.bombs + 2); } // Restock 2 bombs
-            else { 
-                if (p.weapons[0] === this.type || p.weapons[1] === this.type) {
-                    if (this.type === 'torpedo') p.weapons[p.weaponIndex] = this.type;
-                } else if (!p.weapons[0]) { p.weapons[0] = this.type; p.weaponIndex = 0; }
-                else if (!p.weapons[1]) { p.weapons[1] = this.type; }
-                else { p.weapons[p.weaponIndex] = this.type; }
+        for (let e of entities) {
+            if(e.hp > 0 && e.x < this.x+this.w && e.x+e.w > this.x && e.y < this.y+this.h && e.y+e.h > this.y) {
+                if(this.type === 'durability') { e.maxHp += 50; e.hp = e.maxHp; }
+                else if (this.type === 'deflector') { e.deflector = true; e.deflectorTimer = 3600; } // 60s at 60fps
+                else if (this.type === 'bomb') { e.bombs = Math.min(5, e.bombs + 2); } // Restock 2 bombs
+                else { 
+                    if (e.weapons[0] === this.type || e.weapons[1] === this.type) {
+                        if (this.type === 'torpedo') e.weapons[e.weaponIndex] = this.type;
+                    } else if (!e.weapons[0]) { e.weapons[0] = this.type; e.weaponIndex = 0; }
+                    else if (!e.weapons[1]) { e.weapons[1] = this.type; }
+                    else { e.weapons[e.weaponIndex] = this.type; }
+                }
+                this.dead = true;
+                if (e.isPlayer) {
+                    score += 100; // Bonus woolongs for tech
+                    updateUI();
+                }
+                createParticles(this.x+10, this.y+10, '#3498db', 10, 5);
+                break; // Only one entity can pick up a crate
             }
-            this.dead = true;
-            score += 100; // Bonus woolongs for tech
-            updateUI();
-            createParticles(this.x+10, this.y+10, '#3498db', 10, 5);
         }
     }
     draw(ctx) {
@@ -790,8 +790,8 @@ setInterval(() => {
 function updateUI() {
     let p = entities[0];
     if(!p) return;
-    document.getElementById('health-bar').style.width = Math.max(0, (p.hp/p.maxHp)*100) + '%';
-    document.getElementById('fuel-bar').style.width = Math.max(0, (p.fuel/p.maxFuel)*100) + '%';
+    document.getElementById('health-val').innerText = Math.max(0, Math.round((p.hp/p.maxHp)*100)) + '%';
+    document.getElementById('fuel-val').innerText = Math.max(0, Math.round((p.fuel/p.maxFuel)*100)) + '%';
     
     let names = { 'pistol': 'BASIC SEMI-AUTO', 'smg': 'SUBMACHINE GUN', 'laser': 'LASER SHOOTER', 'torpedo': 'TORPEDO SHOOTER', null: 'EMPTY' };
     let w1 = names[p.weapons[0]] || 'NONE';
@@ -802,7 +802,7 @@ function updateUI() {
     let statusEl = document.getElementById('status-effect');
     if (statusEl) {
         statusEl.style.display = 'block';
-        statusEl.innerText = `DEF ${Math.ceil(p.deflectorTimer/60)}S`;
+        statusEl.innerText = `DEFLECTOR: ${Math.ceil(p.deflectorTimer/60)}S`;
     } else {
         statusEl.style.display = 'none';
     }
