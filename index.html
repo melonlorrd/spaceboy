@@ -411,7 +411,7 @@ class Mercenary {
             this.thrustAngle = angle + Math.PI; // Thruster points opposite to movement direction
             this.vx += Math.cos(angle) * speed;
             this.vy += Math.sin(angle) * speed;
-            this.fuel -= 1.5; // Core power drains
+            this.fuel -= 0.5; // Core power drains
             thrustActive = true;
             
             let tx = this.x + this.w/2 + Math.cos(this.thrustAngle) * 41;
@@ -996,11 +996,17 @@ document.getElementById('touch-toggle').addEventListener('click', () => {
             // Clear any active desktop inputs to prevent sticky keys
             for (let k in keys) keys[k] = false;
             mouse.down = false;
+            localStorage.setItem('spaceboy_touchUI', 'true');
     } else {
         joy.style.display = 'none'; actions.style.display = 'none';
         btn.innerText = 'TOUCH UI: OFF';
+        localStorage.setItem('spaceboy_touchUI', 'false');
     }
 });
+
+if (localStorage.getItem('spaceboy_touchUI') === 'true') {
+    document.getElementById('touch-toggle').click();
+}
 
 const joyBase = document.getElementById('touch-joystick');
 const joyKnob = document.getElementById('touch-knob');
@@ -1029,9 +1035,25 @@ document.getElementById('fullscreen-toggle').addEventListener('click', () => {
 });
 document.addEventListener('fullscreenchange', () => {
     let btn = document.getElementById('fullscreen-toggle');
-    if (document.fullscreenElement) btn.innerText = 'EXIT FS';
-    else btn.innerText = 'FULLSCREEN';
+    if (document.fullscreenElement) {
+        btn.innerText = 'EXIT FS';
+        localStorage.setItem('spaceboy_fullscreen', 'true');
+    } else {
+        btn.innerText = 'FULLSCREEN';
+        localStorage.setItem('spaceboy_fullscreen', 'false');
+    }
 });
+
+// Auto-resume fullscreen on first interaction if previously enabled
+if (localStorage.getItem('spaceboy_fullscreen') === 'true') {
+    const resumeFS = () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        document.removeEventListener('click', resumeFS);
+        document.removeEventListener('touchstart', resumeFS);
+    };
+    document.addEventListener('click', resumeFS);
+    document.addEventListener('touchstart', resumeFS);
+}
 
 document.getElementById('restart-btn').addEventListener('click', () => location.reload());
 
