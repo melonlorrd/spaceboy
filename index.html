@@ -122,6 +122,8 @@
     </div>
 
     <canvas id="gameCanvas"></canvas>
+    
+    <button id="restart-btn" class="ctrl-btn" style="display: none; position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; padding: 15px 30px; border: 2px solid #e74c3c; color: #e74c3c; background: rgba(20, 5, 5, 0.9); z-index: 20;">RESTART MISSION</button>
 
 <script>
 /** CORE SETUP */
@@ -965,7 +967,9 @@ function gameLoop() {
         
         ctx.font = '16px "Courier Prime", monospace';
         ctx.fillStyle = '#e74c3c';
-        ctx.fillText("SYSTEM CONNECTION LOST - REFRESH TO RECONNECT", canvas.width/2, canvas.height/2 + 40);
+        ctx.fillText("SYSTEM CONNECTION LOST", canvas.width/2, canvas.height/2 + 40);
+        
+        document.getElementById('restart-btn').style.display = 'block';
         return; 
     }
 
@@ -1028,6 +1032,8 @@ document.addEventListener('fullscreenchange', () => {
     if (document.fullscreenElement) btn.innerText = 'EXIT FS';
     else btn.innerText = 'FULLSCREEN';
 });
+
+document.getElementById('restart-btn').addEventListener('click', () => location.reload());
 
 </script>
 </body>
